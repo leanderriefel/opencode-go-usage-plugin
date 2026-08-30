@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/src/snapshots/oxlintrc_schema.json",
+  "plugins": ["typescript", "unicorn", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off",
+    "perf": "warn",
+    "restriction": "off",
+    "style": "off"
+  },
+  "rules": {
+    "no-console": "off",
+    "no-unused-vars": "off",
+    "typescript/no-unused-vars": "warn",
+    "no-await-in-loop": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/tui.tsx"],
+      "rules": {
+        "typescript/no-unused-vars": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist", "node_modules"]
+}

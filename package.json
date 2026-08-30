@@ -1,0 +1,92 @@
+{
+  "name": "opencode-go-usage-plugin",
+  "version": "0.1.0",
+  "description": "OpenCode 2 (beta) plugin — slash commands /go, /go-usage, /gousage to show current OpenCode Go (Zen Go) usage & quota. No LLM calls, just the hosted Go usage API.",
+  "keywords": [
+    "billing",
+    "opencode",
+    "opencode-go",
+    "opencode2",
+    "plugin",
+    "quota",
+    "tui",
+    "usage",
+    "zen"
+  ],
+  "homepage": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin/issues"
+  },
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./tui": {
+      "types": "./dist/tui.d.ts",
+      "default": "./dist/tui.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "format": "oxfmt --check .",
+    "format:fix": "oxfmt .",
+    "check": "npm run typecheck && npm run lint && npm run format",
+    "dev": "tsc -p tsconfig.json --watch",
+    "prepack": "npm run build",
+    "test": "npm run typecheck"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "beta"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "beta",
+    "@opentui/core": "^0.5.9",
+    "@opentui/solid": "^0.5.9",
+    "@types/node": "^22.15.0",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "solid-js": "^1.9.9",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.5.9",
+    "@opentui/solid": ">=0.5.9",
+    "solid-js": ">=1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

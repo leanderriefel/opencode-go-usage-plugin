@@ -1,0 +1,7 @@
+src
+tsconfig.json
+.oxlintrc.json
+.oxfmtrc.json
+.github
+.vscode
+*.log
