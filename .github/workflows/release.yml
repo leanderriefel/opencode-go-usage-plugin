@@ -15,21 +15,19 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
       - run: npm run check
       - run: npm run build
-      - name: Publish to npm (OIDC)
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm (trusted publishing)
+        run: npm publish --provenance --access public
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:

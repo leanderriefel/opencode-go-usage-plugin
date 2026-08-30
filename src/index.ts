@@ -24,8 +24,8 @@ async function get(ctx?: {
   } catch (e) {
     const s = (e as { status?: number }).status
     const m = e instanceof Error ? e.message : String(e)
-    if (s === 401) return err("401 — key rejected.", help())
-    if (s === 403) return err("403 — no Go subscription.", "https://opencode.ai/go")
+    if (s === 401) return err("401 - key rejected.", help())
+    if (s === 403) return err("403 - no Go subscription.", "https://opencode.ai/go")
     return err(m.slice(0, 600))
   }
 }
@@ -34,20 +34,6 @@ export default Plugin.define({
   id: "opencode-go-usage",
   tui: true,
   async setup(ctx) {
-    await ctx.command.transform((d) => {
-      d.add({
-        name: "go-usage",
-        description: "Show Go usage",
-        execute: async ({ sessionID }) => {
-          const t = await get(ctx as never)
-          try {
-            await ctx.session.synthetic({ sessionID, text: t })
-          } catch {
-            await ctx.session.prompt({ sessionID, text: t } as never)
-          }
-        },
-      })
-    })
     await ctx.tool.transform((d) => {
       d.add({
         name: "go_usage",
