@@ -14,8 +14,8 @@ async function get(): Promise<string> {
     return md(p) + `\n\n<sub>Source: ${f.source}</sub>`
   } catch (e) {
     const s = (e as { status?: number }).status
-    if (s === 401) return err("401 — key rejected.", help())
-    if (s === 403) return err("403 — no Go subscription.", "https://opencode.ai/go")
+    if (s === 401) return err("401 - key rejected.", help())
+    if (s === 403) return err("403 - no Go subscription.", "https://opencode.ai/go")
     return err(e instanceof Error ? e.message.slice(0, 600) : String(e))
   }
 }
@@ -33,13 +33,13 @@ export default Plugin.define({
           palette: true,
           slash: { name: "go-usage" },
           run: async () => {
-            ctx.ui.toast.show({ message: "Fetching…", variant: "info", duration: 1000 })
+            ctx.ui.toast.show({ message: "Fetching...", variant: "info", duration: 1000 })
             const m = await get()
             try {
-              await ctx.ui.dialog.alert({ title: "Go — Usage", message: m })
+              await ctx.ui.dialog.alert({ title: "Go - Usage", message: m })
             } catch {
               ctx.ui.toast.show({
-                title: "Go — Usage",
+                title: "Go - Usage",
                 message: m.slice(0, 2000),
                 variant: "info",
                 duration: 8000,
@@ -48,7 +48,6 @@ export default Plugin.define({
           },
         },
       ],
-      bindings: ["go-usage"],
     }))
   },
 })
