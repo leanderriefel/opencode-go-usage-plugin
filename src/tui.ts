@@ -32,7 +32,7 @@ async function show(api: any): Promise<void> {
   }
 }
 
-function register(api: any): void {
+function tryRegister(api: any): boolean {
   const run = () => {
     void show(api)
   }
@@ -53,9 +53,11 @@ function register(api: any): void {
         bindings: [],
       })
       api.lifecycle?.onDispose?.(d)
-      return
+      return true
     }
-  } catch {}
+  } catch (e) {
+    if (!String(e).includes("Keymap.Provider")) throw e
+  }
   try {
     if (api.keymap?.layer) {
       api.keymap.layer(() => ({
@@ -71,22 +73,37 @@ function register(api: any): void {
           },
         ],
       }))
-      return
+      return true
     }
-  } catch {}
+  } catch (e) {
+    if (!String(e).includes("Keymap.Provider")) throw e
+  }
   try {
     if (api.command?.register) {
       const d = api.command.register(() => [
         { title: "Show Go usage", value: "go-usage", slash: { name: "go-usage" }, onSelect: run },
       ])
       api.lifecycle?.onDispose?.(d)
+      return true
     }
   } catch {}
+  return false
 }
 
 const tui = async (api: any) => {
-  await new Promise<void>((r) => setTimeout(r, 0))
-  register(api)
+  // Try immediately, if provider missing retry after mount
+  if (!tryRegister(api)) {
+    setTimeout(() => {
+      try {
+        tryRegister(api)
+      } catch {}
+    }, 500)
+    setTimeout(() => {
+      try {
+        tryRegister(api)
+      } catch {}
+    }, 1500)
+  }
   api.ui.toast({ message: "Go plugin ready: /go-usage", variant: "info", duration: 2000 })
 }
 
