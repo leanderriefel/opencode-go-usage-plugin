@@ -32,77 +32,28 @@ async function show(api: any): Promise<void> {
   }
 }
 
-function tryRegister(api: any): boolean {
-  const run = () => {
-    void show(api)
-  }
-  try {
-    if (api.keymap?.registerLayer) {
-      const d = api.keymap.registerLayer({
-        commands: [
-          {
-            namespace: "palette",
-            name: "go-usage",
-            title: "Show Go usage",
-            desc: "Show Go usage",
-            category: "Go",
-            slashName: "go-usage",
-            run,
-          },
-        ],
-        bindings: [],
-      })
-      api.lifecycle?.onDispose?.(d)
-      return true
-    }
-  } catch (e) {
-    if (!String(e).includes("Keymap.Provider")) throw e
-  }
-  try {
-    if (api.keymap?.layer) {
-      api.keymap.layer(() => ({
-        mode: "global",
-        commands: [
-          {
-            id: "go-usage",
-            title: "Show Go usage",
-            group: "Go",
-            palette: true,
-            slash: { name: "go-usage" },
-            run,
-          },
-        ],
-      }))
-      return true
-    }
-  } catch (e) {
-    if (!String(e).includes("Keymap.Provider")) throw e
-  }
-  try {
-    if (api.command?.register) {
-      const d = api.command.register(() => [
-        { title: "Show Go usage", value: "go-usage", slash: { name: "go-usage" }, onSelect: run },
-      ])
-      api.lifecycle?.onDispose?.(d)
-      return true
-    }
-  } catch {}
-  return false
-}
-
 const tui = async (api: any) => {
-  // Try immediately, if provider missing retry after mount
-  if (!tryRegister(api)) {
-    setTimeout(() => {
-      try {
-        tryRegister(api)
-      } catch {}
-    }, 500)
-    setTimeout(() => {
-      try {
-        tryRegister(api)
-      } catch {}
-    }, 1500)
+  try {
+    const d = api.command.register(() => [
+      {
+        title: "Show Go usage",
+        value: "go-usage",
+        description: "Show Go usage",
+        category: "Go",
+        slash: { name: "go-usage" },
+        onSelect: () => {
+          void show(api)
+        },
+      },
+    ])
+    api.lifecycle.onDispose(d)
+  } catch (e) {
+    try {
+      api.ui.toast({
+        message: `Go command register failed: ${String(e).slice(0, 200)}`,
+        variant: "error",
+      })
+    } catch {}
   }
   api.ui.toast({ message: "Go plugin ready: /go-usage", variant: "info", duration: 2000 })
 }
