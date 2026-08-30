@@ -1,7 +1,7 @@
 {
   "name": "opencode-go-usage-plugin",
   "version": "0.1.0",
-  "description": "OpenCode 2 (beta) plugin — slash commands /go, /go-usage, /gousage to show current OpenCode Go (Zen Go) usage & quota. No LLM calls, just the hosted Go usage API.",
+  "description": "OpenCode 2 — /go-usage shows Go usage",
   "keywords": [
     "billing",
     "opencode",
@@ -64,11 +64,11 @@
     "@opencode-ai/plugin": "beta",
     "@opentui/core": "^0.5.9",
     "@opentui/solid": "^0.5.9",
-    "@types/node": "^22.15.0",
+    "@types/node": "^26.4.0",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
-    "solid-js": "^1.9.9",
-    "typescript": "^5.9.3"
+    "solid-js": "^1.9.15",
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "@opentui/core": ">=0.5.9",
@@ -87,6 +87,6 @@
     }
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   }
 }
