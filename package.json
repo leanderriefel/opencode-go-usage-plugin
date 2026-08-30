@@ -13,15 +13,15 @@
     "usage",
     "zen"
   ],
-  "homepage": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin#readme",
+  "homepage": "https://github.com/leanderriefel/opencode-go-usage-plugin#readme",
   "bugs": {
-    "url": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin/issues"
+    "url": "https://github.com/leanderriefel/opencode-go-usage-plugin/issues"
   },
   "license": "MIT",
-  "author": "",
+  "author": "leanderriefel",
   "repository": {
     "type": "git",
-    "url": "https://github.com/opencode-go-usage-plugin/opencode-go-usage-plugin"
+    "url": "https://github.com/leanderriefel/opencode-go-usage-plugin.git"
   },
   "files": [
     "dist",
