@@ -1,4 +1,3 @@
-import { Plugin } from "@opencode-ai/plugin/tui"
 import { discoverKey, help } from "./lib/auth.js"
 import { fetchUsage, parse } from "./lib/go-usage.js"
 import { err, md } from "./lib/format.js"
@@ -19,9 +18,12 @@ async function get(): Promise<string> {
   }
 }
 
-export default Plugin.define({
+// Export the exact shape the beta-18684 TUI loader expects: { id: string, setup: function }
+// No @opencode-ai/plugin/tui import — the config dir may have a v1 version whose
+// dist/tui.js is `export {}` (Plugin would be undefined, crashing at import time).
+export default {
   id: "opencode-go-usage.tui",
-  setup(context) {
+  setup(context: any) {
     // setup() runs outside the Solid tree in this beta — calling keymap.layer()
     // here throws "Keymap.Provider is missing". Register from a slot render
     // instead (that runs inside the tree), same as the built-in plugins.
@@ -59,4 +61,4 @@ export default Plugin.define({
     })
     return () => unregister()
   },
-})
+}
