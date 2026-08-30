@@ -1,3 +1,4 @@
+import { Plugin } from "@opencode-ai/plugin/tui"
 import { discoverKey, help } from "./lib/auth.js"
 import { fetchUsage, parse } from "./lib/go-usage.js"
 import { err, md } from "./lib/format.js"
@@ -18,44 +19,44 @@ async function get(): Promise<string> {
   }
 }
 
-async function show(api: any): Promise<void> {
-  const m = await get()
-  try {
-    await api.ui.dialog.alert({ title: "Go - Usage", message: m })
-  } catch {
-    api.ui.toast({
-      title: "Go - Usage",
-      message: m.slice(0, 2000),
-      variant: "info",
-      duration: 8000,
-    })
-  }
-}
-
-const tui = async (api: any) => {
-  try {
-    const d = api.command.register(() => [
-      {
-        title: "Show Go usage",
-        value: "go-usage",
-        description: "Show Go usage",
-        category: "Go",
-        slash: { name: "go-usage" },
-        onSelect: () => {
-          void show(api)
-        },
+export default Plugin.define({
+  id: "opencode-go-usage.tui",
+  setup(context) {
+    // setup() runs outside the Solid tree in this beta — calling keymap.layer()
+    // here throws "Keymap.Provider is missing". Register from a slot render
+    // instead (that runs inside the tree), same as the built-in plugins.
+    const unregister = context.ui.slot({
+      append: "app",
+      render: () => {
+        context.keymap.layer(() => ({
+          mode: "global",
+          commands: [
+            {
+              id: "go-usage.show",
+              title: "Show Go usage",
+              group: "Go",
+              palette: true,
+              slash: { name: "go-usage" },
+              run: async () => {
+                context.ui.toast.show({ message: "Fetching...", variant: "info", duration: 1000 })
+                const m = await get()
+                try {
+                  await context.ui.dialog.alert({ title: "Go - Usage", message: m })
+                } catch {
+                  context.ui.toast.show({
+                    title: "Go - Usage",
+                    message: m.slice(0, 2000),
+                    variant: "info",
+                    duration: 8000,
+                  })
+                }
+              },
+            },
+          ],
+        }))
+        return null
       },
-    ])
-    api.lifecycle.onDispose(d)
-  } catch (e) {
-    try {
-      api.ui.toast({
-        message: `Go command register failed: ${String(e).slice(0, 200)}`,
-        variant: "error",
-      })
-    } catch {}
-  }
-  api.ui.toast({ message: "Go plugin ready: /go-usage", variant: "info", duration: 2000 })
-}
-
-export default { id: "opencode-go-usage.tui", tui }
+    })
+    return () => unregister()
+  },
+})

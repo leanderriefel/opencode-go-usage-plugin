@@ -1,6 +1,6 @@
 {
   "name": "opencode-go-usage-plugin",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "OpenCode 2 — /go-usage shows Go usage",
   "keywords": [
     "billing",
