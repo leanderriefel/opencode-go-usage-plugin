@@ -22,8 +22,9 @@ export function md(u: ParsedUsage, now = Date.now()): string {
 export function sidebar(u: ParsedUsage, now = Date.now()): string {
   const lines = ["OpenCode Go - Usage", ""]
   for (const w of u.windows) {
+    // Sidebar is ~38 chars wide - keep lines compact so nothing wraps.
     lines.push(
-      `${w.label.padEnd(4)} ${bar(w.percent)} ${w.percent.toFixed(1).padStart(5)}%  ${resetsIn(w.resetsAt, now)}`
+      `${w.label.padEnd(4)}${bar(w.percent, 10)} ${w.percent.toFixed(0).padStart(3)}% ${resetsIn(w.resetsAt, now)}`
     )
   }
   return lines.join("\n")
