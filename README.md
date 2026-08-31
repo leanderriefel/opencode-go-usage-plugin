@@ -3,9 +3,19 @@
 `/go-usage` for OpenCode 2 (`opencode2`) — shows current [OpenCode Go](https://opencode.ai/go) usage via `GET https://opencode.ai/zen/go/v1/usage`. No LLM calls.
 
 - TUI: `/go-usage` opens a dialog with usage bars (5h / 7d / 30d)
-- Agent tool: `go_usage` (the model can call it to answer "what's my Go usage?")
+- Sidebar: live usage panel while an OpenCode Go model is active (toggle via `ctrl+p`)
 
 ## Install
+
+Paste this into an agent session:
+
+```
+Install the npm package "opencode-go-usage-plugin" and add it to the "plugin"
+array in my global opencode config (~/.config/opencode/opencode.json), then
+restart the opencode2 service.
+```
+
+Or manually:
 
 ```bash
 npm i opencode-go-usage-plugin
@@ -37,7 +47,7 @@ Not connected? `/connect` -> **OpenCode Go** -> paste key from https://opencode.
 
 - Endpoint: `GET https://opencode.ai/zen/go/v1/usage` with `Bearer <key>` -> `{ usage: { rolling: { percent, resetsAt }, weekly, monthly } }`
 - Auth: `integration:opencode-go` / `opencode` -> `env:OPENCODE_API_KEY` -> `auth.json`
-- TUI plugin shape: `{ id, setup }` with `keymap.layer` registered from a `ui.slot` render (opencode2 beta-18684 Solid context requirement)
+- TUI plugin shape: `{ id, setup }` with `keymap.layer` registered from a `ui.slot` render (opencode2 beta Solid context requirement)
 
 ## Dev
 
