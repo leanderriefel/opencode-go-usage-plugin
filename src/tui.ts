@@ -1,3 +1,4 @@
+import { createElement, insert } from "@opentui/solid"
 import { report, sidebarReport } from "./lib/report.js"
 
 const POLL_ACTIVE_MS = 30_000 // something is generating in a session
@@ -81,13 +82,21 @@ export default {
       },
     })
 
-    // --- sidebar: slot re-registration is reactive (registry subscribe -> re-render),
-    // so no solid imports are needed: re-mount with the new text after each update.
+    // --- sidebar. opentui requires text nodes to live inside a <text> element,
+    // so build one via the shared renderer helpers (module specifier is aliased
+    // to the host singleton by ensureRuntimePluginSupport).
     function mountSidebar() {
       unregSidebar?.()
       unregSidebar = undefined
       if (!visible) return
-      unregSidebar = context.ui.slot({ append: "sidebar.content", render: () => sidebarText })
+      unregSidebar = context.ui.slot({
+        append: "sidebar.content",
+        render: () => {
+          const el = createElement("text")
+          insert(el, sidebarText)
+          return el
+        },
+      })
     }
 
     function anySessionRunning(): boolean {
