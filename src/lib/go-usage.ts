@@ -64,5 +64,5 @@ export function resetsIn(d: Date | null, now = Date.now()): string {
 
 export function bar(p: number, w = 20): string {
   const f = Math.round((clamp(p) / 100) * w)
-  return "|".repeat(f) + ".".repeat(w - f)
+  return "█".repeat(f) + "░".repeat(w - f)
 }
