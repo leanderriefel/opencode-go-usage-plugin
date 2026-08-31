@@ -1,9 +1,12 @@
 import { createElement, insert } from "@opentui/solid"
 import { report, sidebarReport } from "./lib/report.js"
 
-const POLL_ACTIVE_MS = 30_000 // something is generating in a session
-const POLL_IDLE_MS = 120_000 // background
+const POLL_ACTIVE_MS = 30_000 // generating with a Go model
+const POLL_IDLE_MS = 120_000 // Go model selected, idle
+const POLL_MODEL_CHECK_MS = 60_000 // no Go model - only watch for switches
 const AFTER_MESSAGE_MS = 5_000 // shortly after a message finishes
+
+const GO_PROVIDERS = new Set(["opencode-go"])
 
 type SlotContext = {
   ui: {
@@ -15,25 +18,35 @@ type SlotContext = {
   }
   keymap: { layer: (fn: () => unknown) => void }
   data?: {
-    on: (
-      type: string,
-      handler: (event: { properties?: { sessionID?: string } }) => void
-    ) => () => void
+    on: (type: string, handler: (event: any) => void) => () => void
     session: {
-      list: () => Array<{ id: string }>
+      list: () => Array<{
+        id: string
+        model?: { providerID?: string }
+        time?: { updated?: number }
+      }>
       status: (id: string) => "idle" | "running"
     }
   }
+}
+
+function providerOf(
+  session: { id: string; model?: { providerID?: string } } | undefined,
+  fallback: Map<string, string>
+): string | undefined {
+  return session?.model?.providerID ?? fallback.get(session?.id ?? "")
 }
 
 export default {
   id: "opencode-go-usage.tui",
   setup(context: SlotContext) {
     let visible = true
+    let goInUse = false
     let generating = false
     let sidebarText = ""
     let timer: ReturnType<typeof setTimeout> | undefined
     let unregSidebar: (() => void) | undefined
+    const modelBySession = new Map<string, string>()
 
     // --- keymap: dialog command + sidebar toggle.
     // setup() runs OUTSIDE the Solid tree in this beta, so keymap.layer must be
@@ -72,8 +85,7 @@ export default {
               palette: true,
               run: () => {
                 visible = !visible
-                if (visible) void poll()
-                mountSidebar()
+                void tick()
               },
             },
           ],
@@ -88,7 +100,7 @@ export default {
     function mountSidebar() {
       unregSidebar?.()
       unregSidebar = undefined
-      if (!visible) return
+      if (!visible || !goInUse) return
       unregSidebar = context.ui.slot({
         append: "sidebar.content",
         render: () => {
@@ -97,6 +109,59 @@ export default {
           return el
         },
       })
+    }
+
+    function isGoInUse(): boolean {
+      try {
+        const sessions = [...(context.data?.session.list() ?? [])]
+        const running = sessions.filter((s) => context.data!.session.status(s.id) === "running")
+        const pool = running.length
+          ? running.sort((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0))
+          : sessions.sort((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0)).slice(0, 1)
+        return pool.some((s) => {
+          const p = providerOf(s, modelBySession)
+          return p != null && GO_PROVIDERS.has(p)
+        })
+      } catch {
+        return goInUse
+      }
+    }
+
+    function unmountIfHidden() {
+      if ((!visible || !goInUse) && unregSidebar) {
+        unregSidebar()
+        unregSidebar = undefined
+      }
+    }
+
+    async function tick() {
+      goInUse = isGoInUse()
+      if (visible && goInUse) {
+        try {
+          const t = await sidebarReport()
+          if (t !== sidebarText) {
+            sidebarText = t
+            mountSidebar()
+            return
+          }
+        } catch {}
+      }
+      unmountIfHidden()
+    }
+
+    function schedule() {
+      clearTimeout(timer)
+      const delay = !goInUse ? POLL_MODEL_CHECK_MS : generating ? POLL_ACTIVE_MS : POLL_IDLE_MS
+      timer = setTimeout(() => {
+        void tick().then(schedule)
+      }, delay)
+    }
+
+    // Poll shortly after a message finishes so counters feel live.
+    function onSettled() {
+      generating = anySessionRunning()
+      setTimeout(() => void tick(), AFTER_MESSAGE_MS)
+      schedule()
     }
 
     function anySessionRunning(): boolean {
@@ -111,33 +176,6 @@ export default {
       }
     }
 
-    async function poll() {
-      try {
-        const t = await sidebarReport()
-        if (t !== sidebarText) {
-          sidebarText = t
-          if (visible) mountSidebar()
-        }
-      } catch {}
-    }
-
-    function schedule() {
-      clearTimeout(timer)
-      timer = setTimeout(
-        () => {
-          void poll().then(schedule)
-        },
-        generating ? POLL_ACTIVE_MS : POLL_IDLE_MS
-      )
-    }
-
-    // Poll shortly after a message finishes so counters feel live.
-    function onSettled() {
-      generating = anySessionRunning()
-      setTimeout(() => void poll(), AFTER_MESSAGE_MS)
-      schedule()
-    }
-
     // --- events (defensive: older betas may not expose data)
     const offs: Array<() => void> = []
     const data = context.data
@@ -148,13 +186,22 @@ export default {
         offs.push(data.on("session.execution.failed", () => onSettled()))
         offs.push(data.on("session.execution.interrupted", () => onSettled()))
         offs.push(data.on("session.idle", () => onSettled()))
+        // model switches can add/remove the panel instantly
+        offs.push(
+          data.on("session.model.selected", (e: any) => {
+            const d = e?.data ?? e?.properties
+            const sessionID = d?.sessionID
+            const provider = d?.model?.providerID
+            if (sessionID && provider) {
+              modelBySession.set(sessionID, provider)
+              void tick()
+            }
+          })
+        )
       } catch {}
     }
 
-    void poll().then(() => {
-      mountSidebar()
-      schedule()
-    })
+    void tick().then(schedule)
 
     return () => {
       clearTimeout(timer)
