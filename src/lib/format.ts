@@ -19,6 +19,16 @@ export function md(u: ParsedUsage, now = Date.now()): string {
   return lines.join("\n")
 }
 
+export function sidebar(u: ParsedUsage, now = Date.now()): string {
+  const lines = ["OpenCode Go - Usage", ""]
+  for (const w of u.windows) {
+    lines.push(
+      `${w.label.padEnd(4)} ${bar(w.percent)} ${w.percent.toFixed(1).padStart(5)}%  ${resetsIn(w.resetsAt, now)}`
+    )
+  }
+  return lines.join("\n")
+}
+
 export function err(msg: string, help?: string): string {
   return ["Go - Error", "", msg, ...(help ? ["", help] : [])].join("\n")
 }
