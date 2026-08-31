@@ -8,9 +8,10 @@ const AFTER_MESSAGE_MS = 5_000 // shortly after a message finishes
 
 const GO_PROVIDERS = new Set(["opencode-go"])
 
+type SessionLike = { id: string; model?: { providerID?: string }; time?: { updated?: number } }
 type SlotContext = {
   ui: {
-    slot: (claim: { append: string; render: () => unknown }) => () => void
+    slot: (claim: { append: string; render: (t: { sessionID?: string }) => unknown }) => () => void
     toast: {
       show: (o: { message: string; variant?: string; duration?: number; title?: string }) => void
     }
@@ -20,21 +21,11 @@ type SlotContext = {
   data?: {
     on: (type: string, handler: (event: any) => void) => () => void
     session: {
-      list: () => Array<{
-        id: string
-        model?: { providerID?: string }
-        time?: { updated?: number }
-      }>
+      list: () => SessionLike[]
+      get: (id: string) => SessionLike | undefined
       status: (id: string) => "idle" | "running"
     }
   }
-}
-
-function providerOf(
-  session: { id: string; model?: { providerID?: string } } | undefined,
-  fallback: Map<string, string>
-): string | undefined {
-  return session?.model?.providerID ?? fallback.get(session?.id ?? "")
 }
 
 export default {
@@ -46,6 +37,8 @@ export default {
     let sidebarText = ""
     let timer: ReturnType<typeof setTimeout> | undefined
     let unregSidebar: (() => void) | undefined
+    // Fallback for betas where session info lacks the model field:
+    // sessionID -> providerID, kept fresh via session.model.selected events.
     const modelBySession = new Map<string, string>()
 
     // --- keymap: dialog command + sidebar toggle.
@@ -85,7 +78,7 @@ export default {
               palette: true,
               run: () => {
                 visible = !visible
-                void tick()
+                mountSidebar()
               },
             },
           ],
@@ -97,29 +90,38 @@ export default {
     // --- sidebar. opentui requires text nodes to live inside a <text> element,
     // so build one via the shared renderer helpers (module specifier is aliased
     // to the host singleton by ensureRuntimePluginSupport).
+    //
+    // The text content is an accessor so it re-evaluates reactively when the
+    // viewed session (or its model) changes - each chat can have a different
+    // model, so the panel tracks the session the sidebar is showing.
     function mountSidebar() {
       unregSidebar?.()
       unregSidebar = undefined
-      if (!visible || !goInUse) return
+      if (!visible) return
       unregSidebar = context.ui.slot({
         append: "sidebar.content",
-        render: () => {
+        render: (t) => {
           const el = createElement("text")
-          insert(el, sidebarText)
+          insert(el, () => {
+            if (!visible) return ""
+            const provider = providerForSession(t?.sessionID)
+            return provider && GO_PROVIDERS.has(provider) ? sidebarText : ""
+          })
           return el
         },
       })
     }
 
-    function isGoInUse(): boolean {
+    function providerForSession(sessionID?: string): string | undefined {
+      if (!sessionID) return undefined
+      const s = context.data?.session.get(sessionID)
+      return s?.model?.providerID ?? modelBySession.get(sessionID)
+    }
+
+    function anyGoSession(): boolean {
       try {
-        const sessions = [...(context.data?.session.list() ?? [])]
-        const running = sessions.filter((s) => context.data!.session.status(s.id) === "running")
-        const pool = running.length
-          ? running.toSorted((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0))
-          : sessions.toSorted((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0)).slice(0, 1)
-        return pool.some((s) => {
-          const p = providerOf(s, modelBySession)
+        return context.data!.session.list().some((s) => {
+          const p = s.model?.providerID ?? modelBySession.get(s.id)
           return p != null && GO_PROVIDERS.has(p)
         })
       } catch {
@@ -127,26 +129,15 @@ export default {
       }
     }
 
-    function unmountIfHidden() {
-      if ((!visible || !goInUse) && unregSidebar) {
-        unregSidebar()
-        unregSidebar = undefined
-      }
-    }
-
     async function tick() {
-      goInUse = isGoInUse()
+      goInUse = anyGoSession()
       if (visible && goInUse) {
         try {
           const t = await sidebarReport()
-          if (t !== sidebarText) {
-            sidebarText = t
-            mountSidebar()
-            return
-          }
+          if (t !== sidebarText) sidebarText = t
         } catch {}
       }
-      unmountIfHidden()
+      mountSidebar()
     }
 
     function schedule() {
@@ -159,21 +150,12 @@ export default {
 
     // Poll shortly after a message finishes so counters feel live.
     function onSettled() {
-      generating = anySessionRunning()
+      generating =
+        context.data?.session
+          .list()
+          .some((s) => context.data!.session.status(s.id) === "running") ?? false
       setTimeout(() => void tick(), AFTER_MESSAGE_MS)
       schedule()
-    }
-
-    function anySessionRunning(): boolean {
-      try {
-        return (
-          context.data?.session
-            .list()
-            .some((s) => context.data!.session.status(s.id) === "running") ?? false
-        )
-      } catch {
-        return generating
-      }
     }
 
     // --- events (defensive: older betas may not expose data)
@@ -186,7 +168,7 @@ export default {
         offs.push(data.on("session.execution.failed", () => onSettled()))
         offs.push(data.on("session.execution.interrupted", () => onSettled()))
         offs.push(data.on("session.idle", () => onSettled()))
-        // model switches can add/remove the panel instantly
+        // Model switches: update the map and refresh the panel instantly.
         offs.push(
           data.on("session.model.selected", (e: any) => {
             const d = e?.data ?? e?.properties
