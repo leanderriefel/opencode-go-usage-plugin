@@ -116,8 +116,8 @@ export default {
         const sessions = [...(context.data?.session.list() ?? [])]
         const running = sessions.filter((s) => context.data!.session.status(s.id) === "running")
         const pool = running.length
-          ? running.sort((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0))
-          : sessions.sort((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0)).slice(0, 1)
+          ? running.toSorted((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0))
+          : sessions.toSorted((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0)).slice(0, 1)
         return pool.some((s) => {
           const p = providerOf(s, modelBySession)
           return p != null && GO_PROVIDERS.has(p)
