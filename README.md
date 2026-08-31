@@ -1,9 +1,9 @@
 # opencode-go-usage-plugin
 
-`/go-usage` for OpenCode 2 (`opencode2`) — shows current [OpenCode Go](https://opencode.ai/go) usage via `GET https://opencode.ai/zen/go/v1/usage`. No LLM.
+`/go-usage` for OpenCode 2 (`opencode2`) — shows current [OpenCode Go](https://opencode.ai/go) usage via `GET https://opencode.ai/zen/go/v1/usage`. No LLM calls.
 
-- Server: `/go-usage` (synthetic, no model) + tool `go_usage`
-- TUI: `/go-usage` dialog/toast
+- TUI: `/go-usage` opens a dialog with usage bars (5h / 7d / 30d)
+- Agent tool: `go_usage` (the model can call it to answer "what's my Go usage?")
 
 ## Install
 
@@ -31,20 +31,20 @@ opencode2 service restart
 
 Shows `5h` / `7d` / `30d` windows (`$12`/`$30`/`$60`). Needs Go connected.
 
-Not connected? `/connect` → **OpenCode Go** → paste key from https://opencode.ai/go, or set `OPENCODE_API_KEY`.
+Not connected? `/connect` -> **OpenCode Go** -> paste key from https://opencode.ai/go, or set `OPENCODE_API_KEY`.
 
 ## How it works
 
-- Endpoint: `GET https://opencode.ai/zen/go/v1/usage` with `Bearer <key>` → `{ usage: { rolling: { percent, resetsAt }, weekly, monthly } }`
-- Auth: `integration:opencode-go` / `opencode` → `env:OPENCODE_API_KEY` → `auth.json`
-- Plugin: `Plugin.define` → `ctx.command.transform` → `ctx.session.synthetic`; TUI `keymap.layer` → `ui.dialog` ( https://opencode.ai/v2/docs/build/plugins )
+- Endpoint: `GET https://opencode.ai/zen/go/v1/usage` with `Bearer <key>` -> `{ usage: { rolling: { percent, resetsAt }, weekly, monthly } }`
+- Auth: `integration:opencode-go` / `opencode` -> `env:OPENCODE_API_KEY` -> `auth.json`
+- TUI plugin shape: `{ id, setup }` with `keymap.layer` registered from a `ui.slot` render (opencode2 beta-18684 Solid context requirement)
 
 ## Dev
 
 ```bash
 npm i
 npm run check # typecheck + lint + format
-npm run build # → dist/
+npm run build # -> dist/
 ```
 
 Requires Node `>=24`, TypeScript `7`.

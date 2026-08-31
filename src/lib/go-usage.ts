@@ -1,7 +1,8 @@
 import type { ParsedUsage, RawUsage } from "./types.js"
 
 export const URL = "https://opencode.ai/zen/go/v1/usage"
-const LABEL: Record<string, string> = { rolling: "5h", weekly: "7 days", monthly: "30 days" }
+
+const LABEL: Record<string, string> = { rolling: "5h", weekly: "7d", monthly: "30d" }
 
 function clamp(v: number | string | null | undefined): number {
   const n = Number(v)
@@ -55,16 +56,13 @@ export function dur(ms: number): string {
   return h < 24 ? `${h}h ${m % 60}m` : `${Math.floor(h / 24)}d ${h % 24}h`
 }
 
-export function when(d: Date | null, now = Date.now()): string {
+export function resetsIn(d: Date | null, now = Date.now()): string {
   if (!d) return "unknown"
   const diff = d.getTime() - now
-  return `${diff <= 0 ? "now" : `in ${dur(diff)}`} (${d
-    .toISOString()
-    .replace("T", " ")
-    .replace(/\.\d+Z$/, " UTC")})`
+  return diff <= 0 ? "now" : `in ${dur(diff)}`
 }
 
 export function bar(p: number, w = 20): string {
   const f = Math.round((clamp(p) / 100) * w)
-  return "█".repeat(f) + "░".repeat(w - f)
+  return "|".repeat(f) + ".".repeat(w - f)
 }

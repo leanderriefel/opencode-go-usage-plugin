@@ -3,8 +3,15 @@ import path from "node:path"
 import os from "node:os"
 
 export type FoundKey = { key: string; source: string }
+export type IntegrationLike = {
+  integration: {
+    connection: {
+      active: (id: string) => Promise<{ id: string; label: string } | undefined>
+      resolve: (c: { id: string; label: string }) => Promise<string | Cred | null | undefined>
+    }
+  }
+}
 type Cred = { key?: string; token?: string; apiKey?: string }
-type Conn = { id: string; label: string }
 
 function clean(s: string): string {
   return s
@@ -54,14 +61,7 @@ function fromFile(): FoundKey | null {
   return null
 }
 
-export async function discoverKey(ctx?: {
-  integration: {
-    connection: {
-      active: (id: string) => Promise<Conn | undefined>
-      resolve: (c: Conn) => Promise<string | Cred | null | undefined>
-    }
-  }
-}): Promise<FoundKey | null> {
+export async function discoverKey(ctx?: IntegrationLike): Promise<FoundKey | null> {
   if (ctx) {
     for (const id of ["opencode-go", "opencode"] as const) {
       try {
@@ -77,7 +77,7 @@ export async function discoverKey(ctx?: {
 
 export function help(): string {
   return [
-    "/connect → OpenCode Go → paste key from https://opencode.ai/go",
+    "Run /connect, choose OpenCode Go, paste key from https://opencode.ai/go",
     "or set OPENCODE_API_KEY and restart.",
   ].join("\n")
 }

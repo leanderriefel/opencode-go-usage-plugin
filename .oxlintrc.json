@@ -15,13 +15,5 @@
     "typescript/no-unused-vars": "warn",
     "no-await-in-loop": "off"
   },
-  "overrides": [
-    {
-      "files": ["src/tui.tsx"],
-      "rules": {
-        "typescript/no-unused-vars": "off"
-      }
-    }
-  ],
   "ignorePatterns": ["dist", "node_modules"]
 }
