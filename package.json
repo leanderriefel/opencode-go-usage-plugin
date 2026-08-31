@@ -1,6 +1,6 @@
 {
   "name": "opencode-go-usage-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "OpenCode 2 - /go-usage shows Go usage",
   "keywords": [
     "opencode",
@@ -54,9 +54,6 @@
     "dev": "tsc -p tsconfig.json --watch",
     "prepack": "npm run build",
     "test": "npm run typecheck"
-  },
-  "dependencies": {
-    "@opencode-ai/plugin": "beta"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "beta",
